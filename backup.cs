@@ -26,99 +26,101 @@ class backup
 
         string sourcePath = string.Empty;
         string targetPath = string.Empty;
-        string fileName = string.Empty;
 
         if (readConfigFile.Length.Equals(12))
         {
             sourcePath = @"" + readConfigFile[1];
             targetPath = @"" + readConfigFile[3];
-            fileName = readConfigFile[5];
+            //FileName - readConfigFile[5];
 
-            if (fileName[0].Equals('*') && fileName[1].Equals('.'))
+            string[] fileFolderList = Directory.GetFiles(sourcePath, readConfigFile[5]);
+
+            foreach (string f in fileFolderList)
             {
-                string[] fileFolderList = Directory.GetFiles(sourcePath, fileName);
+                // Remove path from the file name.
+                string fName = f.Substring(sourcePath.Length + 1);
 
-                foreach (string f in fileFolderList)
+                bool isErrase = false;
+                string sourceFile = string.Empty;
+                string destFile = string.Empty;
+
+                logMessage.Add("----------------------------------------------------\r\n");
+                logMessage.Add($"Файл за архивиране: {fName}\r\n" +
+                    $"Големина на файла за архивиране:" +
+                    $" {(double)new FileInfo(f).Length / 1024d / 1024d:F2} MB\r\n");
+
+                if (readConfigFile[9].ToLower().Equals("yes"))
                 {
-                    // Remove path from the file name.
-                    string fName = f.Substring(sourcePath.Length + 1);
-
-                    bool isErrase = false;
-                    string sourceFile = string.Empty;
-                    string destFile = string.Empty;
-
-                    logMessage.Add("----------------------------------------------------\r\n");
-                    logMessage.Add($"Файл за архивиране: {fName}\r\n" +
-                        $"Големина на файла за архивиране:" +
-                        $" {new FileInfo(f).Length / 1024 / 1024} MB\r\n");
-
-                    if (readConfigFile[9].ToLower().Equals("yes"))
+                    DirectoryInfo di = new DirectoryInfo(sourcePath);
+                    foreach (FileInfo fi in di.GetFiles())
                     {
-                        DirectoryInfo di = new DirectoryInfo(sourcePath);
-                        foreach (FileInfo fi in di.GetFiles())
+                        //for specific file 
+                        if (fi.ToString() == fName)
                         {
-                            //for specific file 
-                            if (fi.ToString() == fName)
-                            {
-                                Compress(fi);
-                            }
+                            Compress(fi);
                         }
+                    }
 
-                        fName += ".gz";
-                        fName = $"{(DateTime.Now)}_{fName})";
-                        sourceFile = Path.Combine(sourcePath, fName);
+                    fName += ".gz";
+
+                    sourceFile = Path.Combine(sourcePath, fName);
+
+                    logMessage.Add($"Компресиране на файла: {fName}\r\n" +
+                        $"Големина на архивен файл: " +
+                        $"{(double)new FileInfo(sourceFile).Length / 1024d / 1024d:F2} MB\r\n");
+
+                    try
+                    {
+                        fName = $"{DateTime.Now.ToString("dd.MM.yy")}" +
+                            $"_{DateTime.Now.ToString("HH.mm")}_" +
+                            $"{fName}";
+
                         destFile = Path.Combine(targetPath, fName);
 
-                        logMessage.Add($"Компресиране на файла: {fName}\r\n" +
-                            $"Големина на архивен файл: " +
-                            $"{new FileInfo(sourceFile).Length / 1024 / 1024} MB\r\n");
-                        try
-                        {
-                            //File.Copy(Path.Combine(sourceFile, destFile), Path.Combine(sourceFile, destFile), true);
-                            File.Copy(sourceFile, destFile, true);
-                            File.Delete(sourceFile);
-                            logMessage.Add($"Компресирания файла \"{destFile}\" е успешно преместен в отдалечената папка.\r\n");
-                            isErrase = true;
-                        }
-                        catch (Exception)
-                        {
-                            logMessage.Add("ВНИМАНИЕ! - Компресирания файла, не е преместен в отдалечената папка.\r\n");
-                        }
+                        //File.Copy(Path.Combine(sourceFile, destFile), Path.Combine(sourceFile, destFile), true);
+                        File.Copy(sourceFile, destFile, true);
+                        File.Delete(sourceFile);
+                        logMessage.Add($"Компресирания файла \"{destFile}\" е успешно преместен в отдалечената папка.\r\n");
+                        isErrase = true;
                     }
-                    else if (readConfigFile[9].ToLower().Equals("no"))
+                    catch (Exception)
                     {
-                        sourceFile = Path.Combine(sourcePath, fName);
-                        destFile = Path.Combine(targetPath, fName);
+                        logMessage.Add("ВНИМАНИЕ! - Компресирания файла, не е преместен в отдалечената папка.\r\n");
+                    }
+                }
+                else if (readConfigFile[9].ToLower().Equals("no"))
+                {
+                    sourceFile = Path.Combine(sourcePath, fName);
+                    destFile = Path.Combine(targetPath, fName);
 
-                        try
-                        {
-                            File.Copy(sourceFile, destFile, true);
-                            logMessage.Add($"Файла \"{destFile}\" е успешно копиран в отдалечената папка.\r\n");
-                            isErrase = true;
-                        }
-                        catch (Exception)
-                        {
-                            logMessage.Add(
-                                $"ВНИМАНИЕ! - Файла \"{destFile}\" не е копиран в отдалечената папка.\r\n");
-                        }
-                    }
-                    else
+                    try
                     {
-                        logMessage.Add($"ВНИМАНИЕ! - Файла НЕ Е АРХИВИРАН!!!\r\n");
-                        isErrase = false;
+                        File.Copy(sourceFile, destFile, true);
+                        logMessage.Add($"Файла \"{destFile}\" е успешно копиран в отдалечената папка.\r\n");
+                        isErrase = true;
                     }
+                    catch (Exception)
+                    {
+                        logMessage.Add(
+                            $"ВНИМАНИЕ! - Файла \"{destFile}\" не е копиран в отдалечената папка.\r\n");
+                    }
+                }
+                else
+                {
+                    logMessage.Add($"ВНИМАНИЕ! - Файла НЕ Е АРХИВИРАН!!!\r\n");
+                    isErrase = false;
+                }
 
-                    if (readConfigFile[11].ToLower().Equals("yes") && isErrase)
+                if (readConfigFile[11].ToLower().Equals("yes") && isErrase)
+                {
+                    try
                     {
-                        try
-                        {
-                            File.Delete(f);
-                            logMessage.Add($"Файла \"{f}\" е успешно ИЗТРИТ от папката.\r\n");
-                        }
-                        catch (Exception)
-                        {
-                            logMessage.Add($"ВНИМАНИЕ! - Файла \"{f}\" НЕ Е ИЗТРИТ от папката.\r\n");
-                        }
+                        File.Delete(f);
+                        logMessage.Add($"Файла \"{f}\" е успешно ИЗТРИТ от папката.\r\n");
+                    }
+                    catch (Exception)
+                    {
+                        logMessage.Add($"ВНИМАНИЕ! - Файла \"{f}\" НЕ Е ИЗТРИТ от папката.\r\n");
                     }
                 }
             }
@@ -128,7 +130,7 @@ class backup
         logMessage.Add($"Дата и час на преключване на архива: {DateTime.Now}\r\n");
         logMessage.Add("====================================================\r\n");
         //Test log file - create.
-        string logFile = GetLogFile(readConfigFile, dirBackupConf);
+        string logFile = GetSizeLogFle(readConfigFile, dirBackupConf);
 
         try
         {
@@ -140,7 +142,7 @@ class backup
         catch (Exception)
         {
             Console.WriteLine($"ВНИМАНИЕ!!!-грешка в пътя до log.txt файла. - Редактирайте: {bacupConf}.");
-            readConfigFile = File.ReadAllLines("backup.conf");
+            readConfigFile = File.ReadAllLines(bacupConf);
             Console.Write(string.Join(" ", readConfigFile));
             return;
         }
@@ -148,6 +150,29 @@ class backup
         CopyLogFileToSourcePath(logMessage, readConfigFile, sourcePath, logFile);
 
         CopyLogFileToTargetPath(logMessage, readConfigFile, targetPath, logFile);
+    }
+
+    private static string GetSizeLogFle(string[] readConfigFile, string dirBackupConf)
+    {
+        string logFile = Path.Combine(dirBackupConf, readConfigFile[7]);
+
+        try
+        {
+            if ((double)new FileInfo(logFile).Length / 1024d / 1024d > 2.00)
+            {
+                string data = DateTime.Now.ToString("dd.MM.yy");
+                string time = DateTime.Now.ToString("HH.mm");
+                dirBackupConf = Path.Combine(dirBackupConf, data + "_" + time + "_" + readConfigFile[7]);
+
+                File.Move(logFile, dirBackupConf);
+            }
+        }
+        catch (Exception)
+        {
+            logFile = GetLogFile(readConfigFile, dirBackupConf);
+        }     
+
+        return logFile;
     }
 
     private static void CopyLogFileToTargetPath(List<string> logMessage, string[] readConfigFile, string targetPath, string logFile)
@@ -198,25 +223,19 @@ class backup
             isExit = false;
         }
 
-        //if (!File.Exists(readConfigFile[7]))
-        //{
-        //    Console.WriteLine($"ВНИМАНИЕ! - Файле \"{readConfigFile[7]}\" не е намерен.");
-        //    isExit = false;
-        //}
-
         return isExit;
     }
 
     public static string GetLogFile(string[] readConfigFile, string dirBackupConf)
     {        
-        string path = Path.Combine(dirBackupConf, readConfigFile[7]);
+        string logFile = Path.Combine(dirBackupConf, readConfigFile[7]);
 
         try
         {
-            if (!File.Exists(path))
+            if (!File.Exists(logFile))
             {
-                File.Create(path).Dispose();
-                using (TextWriter tw = new StreamWriter(path))
+                File.Create(logFile).Dispose();
+                using (TextWriter tw = new StreamWriter(logFile))
                 {
                     tw.WriteLine($"==============================================\r\n" +
                         $"e-mail: peter.g.georgiev@gmail.com\r\n" +
@@ -228,10 +247,10 @@ class backup
         }
         catch (Exception)
         {
-            Console.WriteLine($"ВНИМАНИЕ!!! - грешка в log.txt файла. - Няма коректно въвевени данни в {path}");
+            Console.WriteLine($"ВНИМАНИЕ!!! - грешка в log.txt файла. - Няма коректно въвевени данни в {logFile}");
         }        
 
-        return path;
+        return logFile;
     }
 
     private static string[] GetCorrectConfigFile(string[] readConfigFile, string bacupConf, string dirBacupConf)
@@ -304,9 +323,6 @@ class backup
                         // Copy the source file into 
                         // the compression stream.
                         inFile.CopyTo(Compress);
-
-                        //Console.WriteLine("Compressed {0} from {1} to {2} bytes.",
-                        //    fi.Name, fi.Length.ToString(), outFile.Length.ToString());
                     }
                 }
             }
