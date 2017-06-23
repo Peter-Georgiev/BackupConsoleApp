@@ -10,7 +10,7 @@ class backup
     {
         List<string> logMessage = new List<string>();
 
-        logMessage.Add("====================================================\r\n");
+        logMessage.Add("===============================================================\r\n");
         logMessage.Add($"Дата и час на архивиране: {DateTime.Now}\r\n");
 
         string[] readConfigFile = new string[0];
@@ -31,7 +31,6 @@ class backup
         {
             sourcePath = @"" + readConfigFile[1];
             targetPath = @"" + readConfigFile[3];
-            //FileName - readConfigFile[5];
 
             string[] fileFolderList = Directory.GetFiles(sourcePath, readConfigFile[5]);
 
@@ -44,7 +43,7 @@ class backup
                 string sourceFile = string.Empty;
                 string destFile = string.Empty;
 
-                logMessage.Add("----------------------------------------------------\r\n");
+                logMessage.Add("--------------------------------------------------------------\r\n");
                 logMessage.Add($"Файл за архивиране: {fName}\r\n" +
                     $"Големина на файла за архивиране:" +
                     $" {(double)new FileInfo(f).Length / 1024d / 1024d:F2} MB\r\n");
@@ -54,7 +53,6 @@ class backup
                     DirectoryInfo di = new DirectoryInfo(sourcePath);
                     foreach (FileInfo fi in di.GetFiles())
                     {
-                        //for specific file 
                         if (fi.ToString() == fName)
                         {
                             Compress(fi);
@@ -72,14 +70,15 @@ class backup
                     try
                     {
                         fName = $"{DateTime.Now.ToString("dd.MM.yy")}" +
-                            $"_{DateTime.Now.ToString("HH.mm")}_" +
-                            $"{fName}";
+                        $"_{DateTime.Now.ToString("HH.mm")}_" +
+                        $"{fName}";
 
                         destFile = Path.Combine(targetPath, fName);
 
-                        //File.Copy(Path.Combine(sourceFile, destFile), Path.Combine(sourceFile, destFile), true);
                         File.Copy(sourceFile, destFile, true);
+
                         File.Delete(sourceFile);
+
                         logMessage.Add($"Компресирания файла \"{destFile}\" е успешно преместен в отдалечената папка.\r\n");
                         isErrase = true;
                     }
@@ -126,9 +125,9 @@ class backup
             }
         }
 
-        logMessage.Add("----------------------------------------------------\r\n");
+        logMessage.Add("--------------------------------------------------------------\r\n");
         logMessage.Add($"Дата и час на преключване на архива: {DateTime.Now}\r\n");
-        logMessage.Add("====================================================\r\n");
+        logMessage.Add("===============================================================\r\n");
         //Test log file - create.
         string logFile = GetSizeLogFle(readConfigFile, dirBackupConf);
 
@@ -185,9 +184,9 @@ class backup
         {
             logMessage.Clear();
 
-            File.AppendAllText(logFile, $"====================================================\r\n");
+            File.AppendAllText(logFile, $"===============================================================\r\n");
             File.AppendAllText(logFile, $"{logFile} - не-можа да бъде копиран в \"{targetPath}\" папка.\r\n");
-            File.AppendAllText(logFile, $"====================================================\r\n");
+            File.AppendAllText(logFile, $"===============================================================\r\n");
         }
     }
 
@@ -201,9 +200,9 @@ class backup
         {
             logMessage.Clear();
 
-            File.AppendAllText(logFile, $"====================================================\r\n");
+            File.AppendAllText(logFile, $"===============================================================\r\n");
             File.AppendAllText(logFile, $"{logFile} - не-можа да бъде копиран в \"{sourcePath}\" папка.\r\n");
-            File.AppendAllText(logFile, $"====================================================\r\n");
+            File.AppendAllText(logFile, $"===============================================================\r\n");
         }
     }
 
@@ -237,10 +236,10 @@ class backup
                 File.Create(logFile).Dispose();
                 using (TextWriter tw = new StreamWriter(logFile))
                 {
-                    tw.WriteLine($"==============================================\r\n" +
+                    tw.WriteLine($"===============================================================\r\n" +
                         $"e-mail: peter.g.georgiev@gmail.com\r\n" +
                         $"Create new log file {DateTime.Now}!\r\n" +
-                        $"==============================================\r\n");
+                        $"===============================================================\r\n");
                     tw.Close();
                 }
             }
