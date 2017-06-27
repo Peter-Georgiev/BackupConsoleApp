@@ -239,7 +239,6 @@ class backup
         {
             logMessage.Add($"ВНИМАНИЕ! - Папката \"{targetFolder}\" не е копиран в отдалечената папка.\r\n");
         }
-
     }
 
     private static string GetSizeLogFle(string[] readConfigFile, string dirBackupConf)
